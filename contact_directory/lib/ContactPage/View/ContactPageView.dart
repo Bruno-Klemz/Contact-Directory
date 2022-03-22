@@ -1,25 +1,51 @@
 import 'package:contact_directory/ContactPage/BLoC/ContactPageBloc.dart';
+import 'package:contact_directory/Data/Contact/ContactModel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../HomePage/BLoC/HomePageState.dart';
 import '../BLoC/ContactPageEvent.dart';
 
-class ContactPage extends StatelessWidget {
+class ContactPage extends StatefulWidget {
   final HomePageState state;
+  final ContactModel? contact;
+  final String? contactKey;
+
+  const ContactPage(
+      {Key? key, required this.state, this.contact, this.contactKey})
+      : super(key: key);
+
+  @override
+  State<ContactPage> createState() => _ContactPageState();
+}
+
+class _ContactPageState extends State<ContactPage> {
   final layoutConstrains = ContactPageLayoutConstrains();
+
   final nameController = TextEditingController();
+
   final emailController = TextEditingController();
+
   final phoneController = TextEditingController();
-  ContactPage({
-    Key? key,
-    required this.state,
-  }) : super(key: key);
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.contact != null) {
+      _setControllersValue();
+    }
+  }
+
+  void _setControllersValue() {
+    nameController.text = widget.contact?.name as String;
+    emailController.text = widget.contact?.email as String;
+    phoneController.text = widget.contact?.phone as String;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _mapStateToAppBar(),
+      appBar: _mapStateToAppBar(context),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _saveButton(context);
@@ -41,7 +67,7 @@ class ContactPage extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.only(top: layoutConstrains.verticalPadding),
                 child: _buildTextInput(
-                    label: "Name",
+                    label: "name",
                     context: context,
                     keyboardType: TextInputType.name,
                     controller: nameController),
@@ -49,7 +75,7 @@ class ContactPage extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.only(top: layoutConstrains.verticalPadding),
                 child: _buildTextInput(
-                    label: "Email",
+                    label: "email",
                     context: context,
                     keyboardType: TextInputType.emailAddress,
                     controller: emailController),
@@ -57,7 +83,7 @@ class ContactPage extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.only(top: layoutConstrains.verticalPadding),
                 child: _buildTextInput(
-                    label: "Phone",
+                    label: "phone",
                     context: context,
                     keyboardType: TextInputType.phone,
                     controller: phoneController),
@@ -69,19 +95,22 @@ class ContactPage extends StatelessWidget {
     );
   }
 
-  AppBar _mapStateToAppBar() {
-    switch (state.runtimeType) {
-      case HomePageNewContactState:
+  AppBar _mapStateToAppBar(BuildContext context) {
+    switch (widget.state.runtimeType) {
+      case HomePageContactDetailsState:
         return AppBar(
           backgroundColor: Colors.red,
-          title: const Text("New Contact"),
-        );
-
-      case HomePageEditContactState:
-        final _castedState = state as HomePageEditContactState;
-        return AppBar(
-          backgroundColor: Colors.red,
-          title: Text(_castedState.name),
+          centerTitle: true,
+          title: widget.contact == null
+              ? const Text("New Contact")
+              : Text(widget.contact?.name as String),
+          leading: IconButton(
+            onPressed: () {
+              BlocProvider.of<ContactPageBloc>(context)
+                  .add(ContactPageSwitchToHomeEvent(context: context));
+            },
+            icon: const Icon(Icons.close),
+          ),
         );
       default:
         return AppBar(
@@ -92,8 +121,8 @@ class ContactPage extends StatelessWidget {
   }
 
   Widget _buildContactPhoto() {
-    switch (state.runtimeType) {
-      case HomePageNewContactState:
+    switch (widget.state.runtimeType) {
+      case HomePageContactDetailsState:
         return Container(
           width: layoutConstrains.photoSize,
           height: layoutConstrains.photoSize,
@@ -140,11 +169,30 @@ class ContactPage extends StatelessWidget {
         ));
   }
 
+  String? _buildTextInputInitialValue(String label, String? initialValue) {
+    if (widget.contact != null) {
+      return initialValue;
+    } else {
+      return null;
+    }
+  }
+
   void _saveButton(BuildContext context) {
-    BlocProvider.of<ContactPageBloc>(context).add(ContactPageSaveContactEvent(
-        name: nameController.text,
-        email: emailController.text,
-        phone: phoneController.text, context: context));
+    final contactModel = ContactModel(
+      name: nameController.text,
+      email: emailController.text,
+      phone: phoneController.text,
+    );
+    if (widget.contact == null) {
+      BlocProvider.of<ContactPageBloc>(context).add(ContactPageSaveContactEvent(
+          contactModel: contactModel, context: context));
+    } else {
+      BlocProvider.of<ContactPageBloc>(context).add(
+          ContactPageUpdateContactEvent(
+              contactModel: contactModel,
+              context: context,
+              contactKey: widget.contactKey as String));
+    }
   }
 }
 

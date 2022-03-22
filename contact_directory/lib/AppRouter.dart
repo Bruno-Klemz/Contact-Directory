@@ -1,3 +1,4 @@
+import 'package:contact_directory/Data/Contact/ContactModel.dart';
 import 'package:flutter/material.dart';
 
 import 'ContactPage/View/ContactPageView.dart';
@@ -11,8 +12,19 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const HomePage());
 
       case 'ToNewContact':
-        final _state = settings.arguments as HomePageNewContactState;
-        return MaterialPageRoute(builder: (_) => ContactPage(state: _state));
+        final _castedArguments = settings.arguments as Map<String, dynamic>;
+        if (_castedArguments['contact'] != null) {
+          return MaterialPageRoute(
+              builder: (_) => ContactPage(
+                  state: _castedArguments['state'],
+                  contact: _castedArguments['contact'], contactKey: _castedArguments['key'],));
+        } 
+        else {
+          return MaterialPageRoute(
+              builder: (_) => ContactPage(
+                    state: _castedArguments['state']
+                  ));
+        }
 
       case 'ToHome':
         return MaterialPageRoute(builder: (_) => const HomePage());
