@@ -12,11 +12,19 @@ class ContactPageBloc extends Bloc<ContactPageEvent, ContactPageState> {
       initialState, this._repository, ContactPageNavigator navigator)
       : super(initialState) {
     on<ContactPageSaveContactEvent>((event, emit) async {
-      final model = ContactModel(
-          name: event.name, email: event.email, phone: event.phone);
-
-      await _repository.createNewContact(model);
-      navigator.navigate(ContactPageSwitchToHomeEvent(context: event.context));
+      await _repository.createNewContact(event.contactModel);
+      BlocProvider.of<ContactPageBloc>(event.context)
+          .add(ContactPageSwitchToHomeEvent(context: event.context));
     });
+    on<ContactPageUpdateContactEvent>((event, emit) async {
+      await _repository.updateContact(event.contactModel, event.contactKey);
+      BlocProvider.of<ContactPageBloc>(event.context)
+          .add(ContactPageSwitchToHomeEvent(context: event.context));
+    });
+    on<ContactPageDeleteContactEvent>((event, emit) async =>
+        await _repository.deleteContact(event.name.toString()));
+
+    on<ContactPageSwitchToHomeEvent>(
+        (event, emit) => navigator.navigate(event));
   }
 }

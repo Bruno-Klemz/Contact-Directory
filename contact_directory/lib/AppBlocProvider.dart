@@ -15,7 +15,7 @@ class AppBlocProvider {
     List<BlocProvider> blocProviderList = [
       BlocProvider<HomePageBloc>(
           create: (BuildContext context) =>
-              HomePageBloc(HomePageInitialState(), HomePageNavigator())),
+              HomePageBloc(HomePageInitialState(), HomePageNavigator(), ContactRepository(api: ContactAPI()))),
       BlocProvider<ContactPageBloc>(
           create: (BuildContext context) => ContactPageBloc(
               ContactPageInitialState(),
